@@ -1,0 +1,15 @@
+.env
+*.session
+*.session-journal
+__pycache__/
+*.pyc
+*.log
+active_trade.json
+monitoring_trade.json
+news_state.json
+*.flag
+signals_log.csv
+output.png
+.DS_Store
+.venv/
+venv/
