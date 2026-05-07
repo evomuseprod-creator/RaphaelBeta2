@@ -94,6 +94,7 @@ EMA_SLOPE_MIN      = 3.0
 ATR_PERIOD_        = 14
 ATR_RANGING_MAX    = 1.5
 ANNOUNCEMENT_FILE  = str(_PKG_DIR / "announced_v4.flag")
+WINRATE_FIX_FLAG   = str(_PKG_DIR / "announced_winrate_fix.flag")
 
 _last_log_msg = None
 def log_once(msg):
@@ -1401,6 +1402,25 @@ async def main():
                 f.write(datetime.now().isoformat())
         except Exception as e:
             print(f"Announcement error: {e}")
+
+    # ── One-time win-rate recalibration announcement ──
+    if not os.path.isfile(WINRATE_FIX_FLAG):
+        try:
+            rate, wins, _be, losses, _net = get_win_rate()
+            await send_telegram(
+                "⚠️ Raphael — Honest Recalibration\n\n"
+                "We identified and fixed a bug in the OB signal trigger that was causing some signals to fire when price was already at the TP1 level on MT4 — producing instant TP1 hits with no real room to run.\n\n"
+                "🛠️ What we fixed:\n"
+                "The OB trigger now only fires when price is in the lower half of demand zones (BUY) or upper half of supply zones (SELL). This guarantees the midpoint entry always has real distance to TP1 before the EA fills at market.\n\n"
+                "📉 Why the win rate dropped:\n"
+                "Some previous wins came from signals where the EA filled right at the TP1 level → instant exit with no actual gain. Those trades inflated our stats. The fix removes that scenario.\n\n"
+                f"📊 Current Win Rate: {rate}% ({wins}W / {losses}L)\n\n"
+                "Going forward you'll see fewer signals, but each will have real, honest setups behind them. Thanks for trusting Raphael — we're committed to transparency over inflated numbers. 🤝"
+            )
+            with open(WINRATE_FIX_FLAG, "w") as f:
+                f.write(datetime.now().isoformat())
+        except Exception as e:
+            print(f"Winrate fix announcement error: {e}")
 
     try:
         await asyncio.gather(
