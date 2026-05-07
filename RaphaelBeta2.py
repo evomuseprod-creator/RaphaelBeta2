@@ -732,13 +732,20 @@ def detect_order_blocks(df: pd.DataFrame):
 
 
 def check_order_block_signal(df: pd.DataFrame, demand: list, supply: list):
-    """Return (signal, zone) if price is inside a demand or supply OB, else (None, None)."""
+    """Return (signal, zone) if price is inside a demand or supply OB, else (None, None).
+
+    BUY requires price in lower half of the demand zone, SELL in upper half of the
+    supply zone. This keeps the midpoint entry at/above current price for BUY (and
+    at/below for SELL) so the EA's market fill has real room to TP1.
+    """
     price = df["close"].iloc[-1]
     for low, high in demand:
-        if low <= price <= high:
+        mid = (low + high) / 2
+        if low <= price <= mid:
             return "BUY", (low, high)
     for low, high in supply:
-        if low <= price <= high:
+        mid = (low + high) / 2
+        if mid <= price <= high:
             return "SELL", (low, high)
     return None, None
 
